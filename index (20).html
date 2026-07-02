@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emploi du Temps — FS Meknès</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<style>
+:root{
+  --navy:#132a45;
+  --navy-2:#1c3d64;
+  --gold:#c8963e;
+  --gold-light:#e8c98a;
+  --paper:#f6f4ee;
+  --ink:#1b1f24;
+  --line:#d8d2c2;
+  --red:#a4342a;
+  --green:#3c6e47;
+  --white:#ffffff;
+  --shadow:0 4px 18px rgba(19,42,69,0.14);
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Georgia',serif;background:var(--paper);color:var(--ink);}
+body,input,select,button{font-family:'Segoe UI',Tahoma,Arial,sans-serif;}
+h1,h2,h3,.serif{font-family:'Georgia','Times New Roman',serif;}
+button{cursor:pointer;font-family:inherit;}
+::selection{background:var(--gold-light);}
+
+/* ---------- LOGIN ---------- */
+#loginScreen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,var(--navy) 0%,var(--navy-2) 55%,#0d1e33 100%);
+  padding:20px;
+}
+.login-card{
+  background:var(--white);width:400px;max-width:100%;border-radius:4px;
+  box-shadow:var(--shadow);overflow:hidden;
+}
+.login-head{
+  background:var(--navy);color:var(--white);padding:28px 30px 22px;text-align:center;
+  border-bottom:4px solid var(--gold);
+}
+.login-head .crest{
+  width:46px;height:46px;margin:0 auto 10px;border:2px solid var(--gold);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:20px;color:var(--gold);
+}
+.login-head h1{font-size:17px;margin:0 0 3px;letter-spacing:.5px;}
+.login-head p{margin:0;font-size:11.5px;opacity:.75;letter-spacing:1px;text-transform:uppercase;}
+.login-body{padding:26px 30px 30px;}
+.login-body label{display:block;font-size:12.5px;color:#5a5a5a;margin:14px 0 5px;font-weight:600;}
+.login-body input{
+  width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:3px;font-size:14px;
+}
+.login-body input:focus{outline:none;border-color:var(--navy-2);}
+.login-btn{
+  width:100%;margin-top:20px;background:var(--navy);color:#fff;border:none;padding:11px;
+  font-size:14px;letter-spacing:.5px;border-radius:3px;transition:background .15s;
+}
+.login-btn:hover{background:var(--navy-2);}
+.login-err{color:var(--red);font-size:12.5px;margin-top:10px;min-height:14px;}
+.demo-box{
+  margin-top:18px;padding:12px 14px;background:#f4f1e8;border-radius:3px;font-size:11.5px;
+  color:#6b6250;line-height:1.6;border-left:3px solid var(--gold);
+}
+.demo-box b{color:var(--navy);}
+
+/* ---------- APP SHELL ---------- */
+#app{display:none;min-height:100vh;background:var(--paper);}
+header.topbar{
+  background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;height:58px;box-shadow:0 2px 8px rgba(0,0,0,.15);position:sticky;top:0;z-index:50;
+}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand .crest{width:30px;height:30px;border:1.5px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--gold);}
+.brand span{font-size:15px;letter-spacing:.4px;}
+.brand small{display:block;font-size:9.5px;opacity:.65;letter-spacing:1px;}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.role-pill{background:var(--gold);color:var(--navy);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase;}
+.user-name{font-size:13px;}
+.logout-btn{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;padding:6px 14px;border-radius:3px;font-size:12.5px;}
+.logout-btn:hover{background:rgba(255,255,255,.1);}
+
+.tabs{display:flex;gap:2px;background:var(--navy-2);padding:0 22px;overflow-x:auto;}
+.tab-btn{
+  background:transparent;border:none;color:rgba(255,255,255,.65);padding:11px 16px;font-size:13px;
+  border-bottom:3px solid transparent;white-space:nowrap;
+}
+.tab-btn.active{color:#fff;border-bottom-color:var(--gold);font-weight:600;}
+.tab-btn:hover{color:#fff;}
+
+main{padding:22px;max-width:1400px;margin:0 auto;}
+.panel{display:none;}
+.panel.active{display:block;}
+
+.card{background:#fff;border-radius:5px;box-shadow:var(--shadow);padding:20px 22px;margin-bottom:18px;}
+.card h2{margin:0 0 4px;font-size:18px;color:var(--navy);}
+.card .sub{font-size:12.5px;color:#888;margin-bottom:16px;}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px;}
+.toolbar select, .toolbar input{
+  padding:8px 10px;border:1px solid #ccc;border-radius:3px;font-size:13px;background:#fff;
+}
+.btn{
+  padding:8px 16px;border-radius:3px;border:none;font-size:13px;font-weight:600;letter-spacing:.2px;
+}
+.btn-navy{background:var(--navy);color:#fff;}
+.btn-navy:hover{background:var(--navy-2);}
+.btn-gold{background:var(--gold);color:var(--navy);}
+.btn-gold:hover{background:#b8853a;}
+.btn-outline{background:#fff;border:1px solid var(--navy);color:var(--navy);}
+.btn-outline:hover{background:#f0f0f0;}
+.btn-danger{background:#fff;border:1px solid var(--red);color:var(--red);}
+.btn-danger:hover{background:#fbeceb;}
+.btn-sm{padding:5px 10px;font-size:11.5px;}
+
+/* ---------- TIMETABLE GRID ---------- */
+.tt-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:4px;}
+.tt-grid{display:grid;min-width:1000px;position:relative;}
+.tt-corner{background:var(--navy);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:600;}
+.tt-hour{background:#eef0f3;border-left:1px solid var(--line);font-size:11px;color:#666;text-align:center;padding-top:6px;}
+.tt-day-label{background:var(--navy);color:#fff;font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border-top:1px solid rgba(255,255,255,.15);}
+.tt-cellrow{position:relative;border-top:1px solid var(--line);background:#fff;min-height:74px;}
+.tt-cellrow.empty-day{background:repeating-linear-gradient(135deg,#fafafa,#fafafa 8px,#f2f2f2 8px,#f2f2f2 16px);}
+.tt-hourline{position:absolute;top:0;bottom:0;width:1px;background:var(--line);}
+.tt-hourline.hover-slot{cursor:pointer;}
+.tt-block{
+  position:absolute;top:5px;bottom:5px;border-radius:4px;padding:5px 7px;font-size:11px;line-height:1.4;
+  color:#fff;overflow:hidden;box-shadow:0 2px 5px rgba(0,0,0,.18);cursor:grab;border-left:4px solid rgba(0,0,0,.25);
+}
+.tt-block:active{cursor:grabbing;}
+.tt-block b{display:block;font-size:11.5px;}
+.tt-block .rm{opacity:.85;font-size:10px;}
+.tt-block.conflict{outline:2px dashed var(--red);}
+.drop-hint{outline:2px dashed var(--gold);background:rgba(200,150,62,.08);}
+
+.legend-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:11.5px;color:#555;}
+.legend-chip{display:flex;align-items:center;gap:5px;}
+.legend-dot{width:10px;height:10px;border-radius:2px;}
+
+/* ---------- TABLES ---------- */
+table.data-table{width:100%;border-collapse:collapse;font-size:13px;}
+table.data-table th{background:#f0eee6;color:var(--navy);text-align:left;padding:9px 10px;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--line);}
+table.data-table td{padding:9px 10px;border-bottom:1px solid #eee;}
+table.data-table tr:hover td{background:#faf9f5;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600;}
+.badge-pending{background:#fdf1de;color:#8a5a00;}
+.badge-ok{background:#e4f0e6;color:var(--green);}
+.badge-rej{background:#fbeceb;color:var(--red);}
+
+/* ---------- MODAL ---------- */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(19,42,69,.55);z-index:200;
+  align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:6px;width:460px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);}
+.modal-head{background:var(--navy);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;}
+.modal-head h3{margin:0;font-size:15.5px;}
+.modal-head button{background:transparent;border:none;color:#fff;font-size:18px;}
+.modal-body{padding:20px;}
+.modal-body label{display:block;font-size:12px;font-weight:600;color:#555;margin:12px 0 5px;}
+.modal-body label:first-child{margin-top:0;}
+.modal-body select,.modal-body input{width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:3px;font-size:13.5px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-foot{padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:8px;}
+.modal-alert{background:#fbeceb;color:var(--red);padding:8px 10px;border-radius:3px;font-size:12px;margin-top:10px;display:none;}
+.modal-alert.show{display:block;}
+
+.empty-state{text-align:center;padding:40px 20px;color:#999;font-size:13.5px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:800px){.grid2{grid-template-columns:1fr;}}
+
+.small-note{font-size:11.5px;color:#999;margin-top:8px;}
+.toast{
+  position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 18px;
+  border-radius:4px;font-size:13px;box-shadow:var(--shadow);z-index:300;display:none;
+}
+.toast.show{display:block;}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-head">
+      <div class="crest">FS</div>
+      <h1>Université Moulay Ismaïl</h1>
+      <p>Faculté des Sciences · Meknès</p>
+    </div>
+    <div class="login-body">
+      <h2 style="font-size:15px;margin:0 0 2px;color:var(--navy);">Plateforme Emploi du Temps</h2>
+      <div style="font-size:12px;color:#888;">Connectez-vous pour accéder à votre espace</div>
+      <label>Identifiant</label>
+      <input id="loginUser" placeholder="ex : admin">
+      <label>Mot de passe</label>
+      <input id="loginPass" type="password" placeholder="••••••••">
+      <button class="btn login-btn" onclick="doLogin()">Se connecter</button>
+      <div class="login-err" id="loginErr"></div>
+      <div class="demo-box">
+        <b>Comptes de démonstration</b><br>
+        Admin : <b>admin</b> / admin123<br>
+        Enseignant : <b>bennani</b> / prof123<br>
+        Étudiant : <b>ginf.s3.a1</b> / etu123<br>
+        Chef de département : <b>khtou</b> / chef123
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="crest">FS</div>
+      <div>
+        <span>Emploi du Temps — FS Meknès</span>
+        <small>Département Informatique</small>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="role-pill" id="rolePill"></span>
+      <span class="user-name" id="userNameLabel"></span>
+      <button class="logout-btn" onclick="doLogout()">Déconnexion</button>
+    </div>
+  </header>
+  <div class="tabs" id="tabsBar"></div>
+  <main id="mainArea"></main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============ MODAL: SEANCE ============ -->
+<div class="modal-overlay" id="seanceModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="seanceModalTitle">Nouvelle séance</h3>
+      <button onclick="closeSeanceModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sm_id">
+      <input type="hidden" id="sm_jour">
+      <label>Groupe / Section</label>
+      <select id="sm_groupe"></select>
+      <label>Module</label>
+      <select id="sm_module"></select>
+      <label>Enseignant</label>
+      <select id="sm_enseignant"></select>
+      <label>Salle</label>
+      <select id="sm_salle"></select>
+      <div class="row2">
+        <div>
+          <label>Heure début</label>
+          <select id="sm_debut"></select>
+        </div>
+        <div>
+          <label>Heure fin</label>
+          <select id="sm_fin"></select>
+        </div>
+      </div>
+      <div class="modal-alert" id="sm_alert"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="sm_delete" style="display:none;" onclick="deleteSeanceFromModal()">Supprimer</button>
+      <button class="btn btn-outline" onclick="closeSeanceModal()">Annuler</button>
+      <button class="btn btn-navy" onclick="saveSeanceFromModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: GENERIC CRUD (salle/module/enseignant/groupe) ============ -->
+<div class="modal-overlay" id="crudModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="crudModalTitle">Élément</h3>
+      <button onclick="closeCrudModal()">✕</button>
+    </div>
+    <div class="modal-body" id="crudModalBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeCrudModal()">Annuler</button>
+      <button class="btn btn-navy" onclick="saveCrudModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   DONNÉES — modèle & seed
+   ========================================================================= */
+const DAYS = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+const DAY_END = {Lundi:19, Mardi:19, Mercredi:19, Jeudi:19, Vendredi:19, Samedi:13};
+const HOUR_START = 8, HOUR_END = 19;
+
+const SEED = {
+  filieres: [
+    {id:"f1", nom:"GINF", semestre:"Semestre III", annee:"2025-26"},
+    {id:"f2", nom:"SDIA", semestre:"Semestre VI", annee:"2025-26"}
+  ],
+  groupes: [
+    {id:"g1", filiereId:"f1", nom:"A1"},
+    {id:"g2", filiereId:"f1", nom:"A2"},
+    {id:"g3", filiereId:"f2", nom:"SDIA-1"},
+    {id:"g4", filiereId:"f2", nom:"SDIA-2"}
+  ],
+  salles: [
+    {id:"s1", nom:"BL6.3", type:"Salle TD"},
+    {id:"s2", nom:"BL6.4", type:"Salle TD"},
+    {id:"s3", nom:"BL6.1", type:"Salle TD"},
+    {id:"s4", nom:"BL6.2", type:"Salle TD"},
+    {id:"s5", nom:"BL9.4", type:"Salle TD"},
+    {id:"s6", nom:"BL4.4", type:"Salle TD"},
+    {id:"s7", nom:"AMPHI E", type:"Amphithéâtre"},
+    {id:"s8", nom:"AMPHI H", type:"Amphithéâtre"},
+    {id:"s9", nom:"AMPHI C", type:"Amphithéâtre"},
+    {id:"s10", nom:"Salle TP1", type:"Salle TP"}
+  ],
+  enseignants: [
+    {id:"e1", nom:"Pr. Bennani", email:"bennani@fsm.ac.ma"},
+    {id:"e2", nom:"Pr. El Amrani", email:"elamrani@fsm.ac.ma"},
+    {id:"e3", nom:"Pr. Khtou", email:"khtou@fsm.ac.ma"},
+    {id:"e4", nom:"Pr. Tazi", email:"tazi@fsm.ac.ma"},
+    {id:"e5", nom:"Pr. Sqalli", email:"sqalli@fsm.ac.ma"},
+    {id:"e6", nom:"Pr. Rachidi", email:"rachidi@fsm.ac.ma"}
+  ],
+  modules: [
+    {id:"m1", nom:"Architecture Ordinateurs", filiereId:"f1"},
+    {id:"m2", nom:"Programmation Web 1", filiereId:"f1"},
+    {id:"m3", nom:"Programmation Langage C", filiereId:"f1"},
+    {id:"m4", nom:"Programmation Objet", filiereId:"f1"},
+    {id:"m5", nom:"Probabilités & Statistiques", filiereId:"f1"},
+    {id:"m6", nom:"Systèmes d'Exploitation", filiereId:"f1"},
+    {id:"m7", nom:"Langue Étrangère III", filiereId:"f1"},
+    {id:"m8", nom:"Machine Learning", filiereId:"f2"},
+    {id:"m9", nom:"Big Data", filiereId:"f2"},
+    {id:"m10", nom:"Deep Learning", filiereId:"f2"}
+  ],
+  seances: [
+    {id:"sc1", jour:"Lundi", debut:8, fin:10, groupeId:"g1", moduleId:"m1", enseignantId:"e1", salleId:"s1"},
+    {id:"sc2", jour:"Lundi", debut:8, fin:10, groupeId:"g2", moduleId:"m2", enseignantId:"e2", salleId:"s2"},
+    {id:"sc3", jour:"Lundi", debut:10, fin:12, groupeId:"g1", moduleId:"m2", enseignantId:"e2", salleId:"s2"},
+    {id:"sc4", jour:"Lundi", debut:10, fin:12, groupeId:"g2", moduleId:"m1", enseignantId:"e1", salleId:"s1"},
+    {id:"sc5", jour:"Mardi", debut:8, fin:11, groupeId:"g1", moduleId:"m1", enseignantId:"e1", salleId:"s7"},
+    {id:"sc6", jour:"Mardi", debut:11, fin:13, groupeId:"g1", moduleId:"m3", enseignantId:"e4", salleId:"s7"},
+    {id:"sc7", jour:"Mardi", debut:14, fin:16, groupeId:"g1", moduleId:"m4", enseignantId:"e5", salleId:"s3"},
+    {id:"sc8", jour:"Mardi", debut:14, fin:16, groupeId:"g2", moduleId:"m3", enseignantId:"e4", salleId:"s4"},
+    {id:"sc9", jour:"Mardi", debut:16, fin:18, groupeId:"g1", moduleId:"m5", enseignantId:"e6", salleId:"s6"},
+    {id:"sc10", jour:"Mardi", debut:16, fin:18, groupeId:"g2", moduleId:"m4", enseignantId:"e5", salleId:"s3"},
+    {id:"sc11", jour:"Mercredi", debut:14, fin:16, groupeId:"g1", moduleId:"m4", enseignantId:"e5", salleId:"s8"},
+    {id:"sc12", jour:"Mercredi", debut:16, fin:18, groupeId:"g1", moduleId:"m5", enseignantId:"e6", salleId:"s9"},
+    {id:"sc13", jour:"Jeudi", debut:11, fin:13, groupeId:"g2", moduleId:"m5", enseignantId:"e6", salleId:"s5"},
+    {id:"sc14", jour:"Jeudi", debut:14, fin:16, groupeId:"g1", moduleId:"m6", enseignantId:"e3", salleId:"s7"},
+    {id:"sc15", jour:"Jeudi", debut:16, fin:18, groupeId:"g1", moduleId:"m7", enseignantId:"e2", salleId:"s7"},
+    {id:"sc16", jour:"Vendredi", debut:8, fin:10, groupeId:"g2", moduleId:"m6", enseignantId:"e3", salleId:"s1"},
+    {id:"sc17", jour:"Vendredi", debut:10, fin:12, groupeId:"g1", moduleId:"m6", enseignantId:"e3", salleId:"s1"},
+    {id:"sc18", jour:"Vendredi", debut:14, fin:16, groupeId:"g1", moduleId:"m2", enseignantId:"e2", salleId:"s7"},
+    {id:"sc19", jour:"Vendredi", debut:16, fin:18, groupeId:"g1", moduleId:"m3", enseignantId:"e4", salleId:"s4"},
+    {id:"sc20", jour:"Lundi", debut:9, fin:11, groupeId:"g3", moduleId:"m8", enseignantId:"e5", salleId:"s10"},
+    {id:"sc21", jour:"Mercredi", debut:9, fin:12, groupeId:"g3", moduleId:"m9", enseignantId:"e6", salleId:"s3"}
+  ],
+  users: [
+    {username:"admin", password:"admin123", role:"admin", nom:"Administrateur"},
+    {username:"khtou", password:"chef123", role:"chef", nom:"Pr. Khtou", enseignantId:"e3"},
+    {username:"bennani", password:"prof123", role:"enseignant", nom:"Pr. Bennani", enseignantId:"e1"},
+    {username:"elamrani", password:"prof123", role:"enseignant", nom:"Pr. El Amrani", enseignantId:"e2"},
+    {username:"tazi", password:"prof123", role:"enseignant", nom:"Pr. Tazi", enseignantId:"e4"},
+    {username:"ginf.s3.a1", password:"etu123", role:"etudiant", nom:"Étudiant A1 — GINF S3", groupeId:"g1"},
+    {username:"ginf.s3.a2", password:"etu123", role:"etudiant", nom:"Étudiant A2 — GINF S3", groupeId:"g2"},
+    {username:"sdia.s6.1", password:"etu123", role:"etudiant", nom:"Étudiant SDIA-1", groupeId:"g3"}
+  ],
+  swapRequests: []
+};
+
+/* =========================================================================
+   STOCKAGE
+   ========================================================================= */
+const DB_KEY = "edt_fsm_db_v1";
+let db;
+function loadDB(){
+  const raw = localStorage.getItem(DB_KEY);
+  if(raw){ db = JSON.parse(raw); }
+  else { db = JSON.parse(JSON.stringify(SEED)); saveDB(); }
+}
+function saveDB(){ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+function uid(prefix){ return prefix + Math.random().toString(36).slice(2,9); }
+
+/* lookups */
+const byId = (arr,id) => arr.find(x=>x.id===id);
+const moduleName = id => (byId(db.modules,id)||{}).nom || "?";
+const salleName = id => (byId(db.salles,id)||{}).nom || "?";
+const enseignantName = id => (byId(db.enseignants,id)||{}).nom || "?";
+const groupeName = id => { const g=byId(db.groupes,id); return g? g.nom : "?"; };
+const filiereOfGroupe = gid => { const g=byId(db.groupes,gid); return g? byId(db.filieres,g.filiereId) : null; };
+
+/* colour per module (stable hash) */
+const MODULE_COLORS = ["#1c3d64","#7a4a9c","#3c6e47","#a4342a","#b8853a","#2b6f77","#6b4a2f","#4a5a8c","#8c4a5a","#4a8c6b"];
+function moduleColor(moduleId){
+  let h=0; for(const c of moduleId) h=(h*31+c.charCodeAt(0))>>>0;
+  return MODULE_COLORS[h % MODULE_COLORS.length];
+}
+
+/* =========================================================================
+   SESSION / AUTH
+   ========================================================================= */
+let currentUser = null;
+const SESSION_KEY = "edt_fsm_session";
+
+function doLogin(){
+  const u = document.getElementById("loginUser").value.trim().toLowerCase();
+  const p = document.getElementById("loginPass").value;
+  const found = db.users.find(x=>x.username.toLowerCase()===u && x.password===p);
+  if(!found){
+    document.getElementById("loginErr").textContent = "Identifiant ou mot de passe incorrect.";
+    return;
+  }
+  document.getElementById("loginErr").textContent = "";
+  currentUser = found;
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(found));
+  enterApp();
+}
+function doLogout(){
+  currentUser = null;
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById("app").style.display = "none";
+  document.getElementById("loginScreen").style.display = "flex";
+  document.getElementById("loginUser").value = "";
+  document.getElementById("loginPass").value = "";
+}
+function tryRestoreSession(){
+  const raw = sessionStorage.getItem(SESSION_KEY);
+  if(raw){ currentUser = JSON.parse(raw); enterApp(); }
+}
+
+/* =========================================================================
+   APP SHELL / TABS
+   ========================================================================= */
+const ROLE_LABELS = {admin:"Administrateur", chef:"Chef de département", enseignant:"Enseignant", etudiant:"Étudiant"};
+
+function enterApp(){
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  document.getElementById("rolePill").textContent = ROLE_LABELS[currentUser.role];
+  document.getElementById("userNameLabel").textContent = currentUser.nom;
+  buildTabs();
+}
+
+const TABS_BY_ROLE = {
+  admin: [
+    {id:"planning", label:"Planning"},
+    {id:"donnees", label:"Données de base"},
+    {id:"demandes", label:"Demandes d'échange"},
+    {id:"export", label:"Export"}
+  ],
+  chef: [
+    {id:"planning", label:"Planning"},
+    {id:"demandes", label:"Demandes d'échange"},
+    {id:"export", label:"Export"}
+  ],
+  enseignant: [
+    {id:"monplanning", label:"Mon emploi du temps"},
+    {id:"export", label:"Export"}
+  ],
+  etudiant: [
+    {id:"monplanning", label:"Mon emploi du temps"},
+    {id:"export", label:"Export"}
+  ]
+};
+
+let activeTab = null;
+function buildTabs(){
+  const tabs = TABS_BY_ROLE[currentUser.role];
+  const bar = document.getElementById("tabsBar");
+  bar.innerHTML = "";
+  tabs.forEach((t,i)=>{
+    const btn = document.createElement("button");
+    btn.className = "tab-btn" + (i===0?" active":"");
+    btn.textContent = t.label;
+    btn.onclick = ()=> switchTab(t.id, btn);
+    bar.appendChild(btn);
+  });
+  switchTab(tabs[0].id, bar.children[0]);
+}
+function switchTab(tabId, btnEl){
+  activeTab = tabId;
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  if(btnEl) btnEl.classList.add("active");
+  renderMain();
+}
+
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+
+/* =========================================================================
+   RENDER ROUTER
+   ========================================================================= */
+function renderMain(){
+  const main = document.getElementById("mainArea");
+  main.innerHTML = "";
+  if(activeTab === "planning") main.appendChild(renderPlanningPanel(true));
+  else if(activeTab === "donnees") main.appendChild(renderDonneesPanel());
+  else if(activeTab === "demandes") main.appendChild(renderDemandesPanel());
+  else if(activeTab === "export") main.appendChild(renderExportPanel());
+  else if(activeTab === "monplanning") main.appendChild(renderMonPlanningPanel());
+}
+
+/* =========================================================================
+   FILTRES globaux du planning admin/chef
+   ========================================================================= */
+let filterState = { filiereId: "f1", groupeId: "all", enseignantId: "all" };
+
+function renderFilterToolbar(editable){
+  const wrap = document.createElement("div");
+  wrap.className = "toolbar";
+
+  const filSel = document.createElement("select");
+  db.filieres.forEach(f=>{
+    const o = document.createElement("option");
+    o.value = f.id; o.textContent = `${f.nom} — ${f.semestre}`;
+    if(f.id===filterState.filiereId) o.selected = true;
+    filSel.appendChild(o);
+  });
+  filSel.onchange = ()=>{ filterState.filiereId = filSel.value; filterState.groupeId="all"; renderMain(); };
+  wrap.appendChild(filSel);
+
+  const grpSel = document.createElement("select");
+  const allOpt = document.createElement("option"); allOpt.value="all"; allOpt.textContent="Tous les groupes";
+  grpSel.appendChild(allOpt);
+  db.groupes.filter(g=>g.filiereId===filterState.filiereId).forEach(g=>{
+    const o = document.createElement("option"); o.value=g.id; o.textContent=g.nom;
+    if(g.id===filterState.groupeId) o.selected = true;
+    grpSel.appendChild(o);
+  });
+  grpSel.onchange = ()=>{ filterState.groupeId = grpSel.value; renderMain(); };
+  wrap.appendChild(grpSel);
+
+  const ensSel = document.createElement("select");
+  const allOpt2 = document.createElement("option"); allOpt2.value="all"; allOpt2.textContent="Tous les enseignants";
+  ensSel.appendChild(allOpt2);
+  db.enseignants.forEach(e=>{
+    const o = document.createElement("option"); o.value=e.id; o.textContent=e.nom;
+    if(e.id===filterState.enseignantId) o.selected = true;
+    ensSel.appendChild(o);
+  });
+  ensSel.onchange = ()=>{ filterState.enseignantId = ensSel.value; renderMain(); };
+  wrap.appendChild(ensSel);
+
+  if(editable){
+    const addBtn = document.createElement("button");
+    addBtn.className = "btn btn-gold";
+    addBtn.textContent = "+ Nouvelle séance";
+    addBtn.onclick = ()=> openSeanceModal(null, DAYS[0]);
+    wrap.appendChild(addBtn);
+  }
+  return wrap;
+}
+
+function getFilteredSeances(){
+  return db.seances.filter(sc=>{
+    const g = byId(db.groupes, sc.groupeId);
+    if(!g || g.filiereId !== filterState.filiereId) return false;
+    if(filterState.groupeId!=="all" && sc.groupeId!==filterState.groupeId) return false;
+    if(filterState.enseignantId!=="all" && sc.enseignantId!==filterState.enseignantId) return false;
+    return true;
+  });
+}
+
+/* =========================================================================
+   PANEL: PLANNING (grille interactive drag & drop)
+   ========================================================================= */
+function renderPlanningPanel(editable){
+  const card = document.createElement("div");
+  card.className = "card";
+  const title = document.createElement("h2"); title.textContent = "Planning — grille interactive";
+  const sub = document.createElement("div"); sub.className="sub";
+  sub.textContent = editable ? "Glissez-déposez une séance pour la déplacer, cliquez sur une case vide pour en créer une." : "Consultation du planning.";
+  card.appendChild(title); card.appendChild(sub);
+  card.appendChild(renderFilterToolbar(editable));
+  card.appendChild(buildGrid(getFilteredSeances(), editable));
+
+  const legend = document.createElement("div");
+  legend.className = "legend-row";
+  const modsUsed = [...new Set(getFilteredSeances().map(s=>s.moduleId))];
+  modsUsed.forEach(mid=>{
+    const chip = document.createElement("div"); chip.className="legend-chip";
+    chip.innerHTML = `<span class="legend-dot" style="background:${moduleColor(mid)}"></span>${moduleName(mid)}`;
+    legend.appendChild(chip);
+  });
+  card.appendChild(legend);
+  return card;
+}
+
+function buildGrid(seances, editable){
+  const wrap = document.createElement("div");
+  wrap.className = "tt-wrap";
+  const grid = document.createElement("div");
+  grid.className = "tt-grid";
+  const totalHours = HOUR_END - HOUR_START;
+  grid.style.gridTemplateColumns = `90px repeat(${totalHours}, 1fr)`;
+  grid.style.gridTemplateRows = `34px repeat(${DAYS.length}, 76px)`;
+
+  // header row
+  const corner = document.createElement("div"); corner.className="tt-corner"; corner.textContent="Horaire";
+  corner.style.gridColumn="1"; corner.style.gridRow="1";
+  grid.appendChild(corner);
+  for(let h=HOUR_START; h<HOUR_END; h++){
+    const hc = document.createElement("div"); hc.className="tt-hour"; hc.textContent=h+"h";
+    hc.style.gridColumn = (h-HOUR_START+2); hc.style.gridRow="1";
+    grid.appendChild(hc);
+  }
+
+  DAYS.forEach((day,di)=>{
+    const label = document.createElement("div"); label.className="tt-day-label"; label.textContent=day;
+    label.style.gridColumn="1"; label.style.gridRow=(di+2);
+    grid.appendChild(label);
+
+    const row = document.createElement("div");
+    row.className = "tt-cellrow" + (DAY_END[day] < HOUR_END ? "" : "");
+    row.style.gridColumn = `2 / span ${totalHours}`;
+    row.style.gridRow = (di+2);
+    row.dataset.day = day;
+
+    const dayEndHour = DAY_END[day];
+    if(dayEndHour < HOUR_END){
+      const closed = document.createElement("div");
+      closed.className = "tt-cellrow empty-day";
+      closed.style.position="absolute";
+      closed.style.left = ((dayEndHour-HOUR_START)/totalHours*100)+"%";
+      closed.style.right = "0"; closed.style.top="0"; closed.style.bottom="0";
+      row.appendChild(closed);
+    }
+
+    // hour click zones (for creating new séance) + drop targets
+    for(let h=HOUR_START; h<dayEndHour; h++){
+      const zone = document.createElement("div");
+      zone.className = "tt-hourline hover-slot";
+      zone.style.left = ((h-HOUR_START)/totalHours*100)+"%";
+      zone.style.width = (1/totalHours*100)+"%";
+      zone.dataset.hour = h;
+      if(editable){
+        zone.addEventListener("click",(e)=>{
+          if(e.target===zone) openSeanceModal(null, day, h);
+        });
+        zone.addEventListener("dragover",(e)=>{ e.preventDefault(); zone.classList.add("drop-hint"); });
+        zone.addEventListener("dragleave",()=> zone.classList.remove("drop-hint"));
+        zone.addEventListener("drop",(e)=>{
+          e.preventDefault(); zone.classList.remove("drop-hint");
+          const scId = e.dataTransfer.getData("text/plain");
+          moveSeance(scId, day, parseInt(zone.dataset.hour,10));
+        });
+      }
+      row.appendChild(zone);
+    }
+
+    grid.appendChild(row);
+  });
+
+  wrap.appendChild(grid);
+
+  // place séance blocks (absolute inside their day row) — build after grid attached for offset calc
+  seances.filter(s=>true).forEach(sc=>{
+    const rowEl = grid.querySelector(`.tt-cellrow[data-day="${sc.jour}"]`);
+    if(!rowEl) return;
+    const block = document.createElement("div");
+    block.className = "tt-block";
+    const conflicts = getConflictsFor(sc, db.seances);
+    if(conflicts.length) block.classList.add("conflict");
+    block.style.background = moduleColor(sc.moduleId);
+    const leftPct = (sc.debut-HOUR_START)/totalHours*100;
+    const widthPct = (sc.fin-sc.debut)/totalHours*100;
+    block.style.left = leftPct+"%";
+    block.style.width = `calc(${widthPct}% - 4px)`;
+    block.innerHTML = `<b>${groupeName(sc.groupeId)} · ${moduleName(sc.moduleId)}</b><span class="rm">${salleName(sc.salleId)} · ${sc.debut}h-${sc.fin}h</span>`;
+    block.title = `${enseignantName(sc.enseignantId)}${conflicts.length? "\n⚠ Conflit détecté":""}`;
+    if(editable){
+      block.draggable = true;
+      block.addEventListener("dragstart",(e)=>{ e.dataTransfer.setData("text/plain", sc.id); });
+      block.addEventListener("click",(e)=>{ e.stopPropagation(); openSeanceModal(sc.id, sc.jour); });
+    }
+    rowEl.appendChild(block);
+  });
+
+  return wrap;
+}
+
+function getConflictsFor(sc, allSeances){
+  return allSeances.filter(o=>{
+    if(o.id===sc.id) return false;
+    if(o.jour!==sc.jour) return false;
+    const overlap = o.debut < sc.fin && sc.debut < o.fin;
+    if(!overlap) return false;
+    return o.enseignantId===sc.enseignantId || o.salleId===sc.salleId || o.groupeId===sc.groupeId;
+  });
+}
+function describeConflicts(sc, allSeances){
+  const cs = getConflictsFor(sc, allSeances);
+  const msgs = [];
+  cs.forEach(o=>{
+    if(o.enseignantId===sc.enseignantId) msgs.push(`${enseignantName(sc.enseignantId)} est déjà occupé(e) de ${o.debut}h à ${o.fin}h (${groupeName(o.groupeId)} — ${moduleName(o.moduleId)}).`);
+    if(o.salleId===sc.salleId) msgs.push(`La salle ${salleName(sc.salleId)} est déjà réservée de ${o.debut}h à ${o.fin}h (${groupeName(o.groupeId)} — ${moduleName(o.moduleId)}).`);
+    if(o.groupeId===sc.groupeId) msgs.push(`Le groupe ${groupeName(sc.groupeId)} a déjà une séance de ${o.debut}h à ${o.fin}h (${moduleName(o.moduleId)}).`);
+  });
+  return [...new Set(msgs)];
+}
+
+function moveSeance(scId, newDay, newStartHour){
+  const sc = byId(db.seances, scId);
+  if(!sc) return;
+  const duration = sc.fin - sc.debut;
+  let newEnd = newStartHour + duration;
+  if(newEnd > DAY_END[newDay]) newEnd = DAY_END[newDay];
+  const candidate = {...sc, jour:newDay, debut:newStartHour, fin:newEnd};
+  const others = db.seances.filter(s=>s.id!==sc.id);
+  const conflicts = describeConflicts(candidate, others);
+  if(conflicts.length){
+    toast("⚠ Conflit : " + conflicts[0]);
+    return;
+  }
+  sc.jour = newDay; sc.debut = newStartHour; sc.fin = newEnd;
+  saveDB();
+  renderMain();
+  toast("Séance déplacée avec succès.");
+}
+
+/* =========================================================================
+   MODAL SÉANCE (create / edit)
+   ========================================================================= */
+function fillSelect(sel, items, labelFn){
+  sel.innerHTML = "";
+  items.forEach(it=>{
+    const o = document.createElement("option");
+    o.value = it.id; o.textContent = labelFn(it);
+    sel.appendChild(o);
+  });
+}
+function openSeanceModal(scId, day, startHour){
+  const isEdit = !!scId;
+  document.getElementById("seanceModalTitle").textContent = isEdit ? "Modifier la séance" : "Nouvelle séance";
+  document.getElementById("sm_delete").style.display = isEdit ? "inline-block" : "none";
+  document.getElementById("sm_alert").classList.remove("show");
+  document.getElementById("sm_jour").value = day;
+
+  const groupesFiltres = db.groupes.filter(g=>g.filiereId===filterState.filiereId);
+  const modulesFiltres = db.modules.filter(m=>m.filiereId===filterState.filiereId);
+  fillSelect(document.getElementById("sm_groupe"), groupesFiltres, g=>g.nom);
+  fillSelect(document.getElementById("sm_module"), modulesFiltres, m=>m.nom);
+  fillSelect(document.getElementById("sm_enseignant"), db.enseignants, e=>e.nom);
+  fillSelect(document.getElementById("sm_salle"), db.salles, s=>`${s.nom} (${s.type})`);
+
+  const dEnd = DAY_END[day];
+  const debutSel = document.getElementById("sm_debut");
+  const finSel = document.getElementById("sm_fin");
+  debutSel.innerHTML=""; finSel.innerHTML="";
+  for(let h=HOUR_START; h<dEnd; h++){ const o=document.createElement("option"); o.value=h; o.textContent=h+"h"; debutSel.appendChild(o); }
+  for(let h=HOUR_START+1; h<=dEnd; h++){ const o=document.createElement("option"); o.value=h; o.textContent=h+"h"; finSel.appendChild(o); }
+
+  if(isEdit){
+    const sc = byId(db.seances, scId);
+    document.getElementById("sm_id").value = sc.id;
+    document.getElementById("sm_groupe").value = sc.groupeId;
+    document.getElementById("sm_module").value = sc.moduleId;
+    document.getElementById("sm_enseignant").value = sc.enseignantId;
+    document.getElementById("sm_salle").value = sc.salleId;
+    debutSel.value = sc.debut; finSel.value = sc.fin;
+  } else {
+    document.getElementById("sm_id").value = "";
+    debutSel.value = startHour!==undefined ? startHour : HOUR_START;
+    finSel.value = Math.min((startHour!==undefined?startHour:HOUR_START)+2, dEnd);
+  }
+  document.getElementById("seanceModalOverlay").classList.add("show");
+}
+function closeSeanceModal(){ document.getElementById("seanceModalOverlay").classList.remove("show"); }
+
+function saveSeanceFromModal(){
+  const id = document.getElementById("sm_id").value;
+  const jour = document.getElementById("sm_jour").value;
+  const groupeId = document.getElementById("sm_groupe").value;
+  const moduleId = document.getElementById("sm_module").value;
+  const enseignantId = document.getElementById("sm_enseignant").value;
+  const salleId = document.getElementById("sm_salle").value;
+  const debut = parseInt(document.getElementById("sm_debut").value,10);
+  const fin = parseInt(document.getElementById("sm_fin").value,10);
+
+  const alertBox = document.getElementById("sm_alert");
+  if(fin <= debut){
+    alertBox.textContent = "L'heure de fin doit être après l'heure de début.";
+    alertBox.classList.add("show");
+    return;
+  }
+  const candidate = {id: id || "tmp", jour, groupeId, moduleId, enseignantId, salleId, debut, fin};
+  const others = db.seances.filter(s=>s.id!==id);
+  const conflicts = describeConflicts(candidate, others);
+  if(conflicts.length){
+    alertBox.innerHTML = "⚠ " + conflicts.join("<br>⚠ ");
+    alertBox.classList.add("show");
+    return;
+  }
+
+  if(id){
+    const sc = byId(db.seances, id);
+    Object.assign(sc, {jour,groupeId,moduleId,enseignantId,salleId,debut,fin});
+    toast("Séance modifiée.");
+  } else {
+    db.seances.push({id: uid("sc"), jour,groupeId,moduleId,enseignantId,salleId,debut,fin});
+    toast("Séance créée.");
+  }
+  saveDB();
+  closeSeanceModal();
+  renderMain();
+}
+function deleteSeanceFromModal(){
+  const id = document.getElementById("sm_id").value;
+  db.seances = db.seances.filter(s=>s.id!==id);
+  saveDB();
+  closeSeanceModal();
+  renderMain();
+  toast("Séance supprimée.");
+}
+
+/* =========================================================================
+   PANEL: DONNÉES DE BASE (CRUD admin)
+   ========================================================================= */
+function renderDonneesPanel(){
+  const wrap = document.createElement("div");
+
+  const grid = document.createElement("div"); grid.className="grid2";
+  grid.appendChild(buildCrudCard("Filières", db.filieres, ["nom","semestre","annee"], "filiere"));
+  grid.appendChild(buildCrudCard("Groupes / Sections", db.groupes, ["nom","filiereId"], "groupe"));
+  grid.appendChild(buildCrudCard("Modules", db.modules, ["nom","filiereId"], "module"));
+  grid.appendChild(buildCrudCard("Salles", db.salles, ["nom","type"], "salle"));
+  grid.appendChild(buildCrudCard("Enseignants", db.enseignants, ["nom","email"], "enseignant"));
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+const CRUD_LABELS = {
+  filiere:{title:"Filière", fields:[
+    {key:"nom", label:"Nom", type:"text"},
+    {key:"semestre", label:"Semestre", type:"text"},
+    {key:"annee", label:"Année universitaire", type:"text"}
+  ]},
+  groupe:{title:"Groupe", fields:[
+    {key:"nom", label:"Nom du groupe", type:"text"},
+    {key:"filiereId", label:"Filière", type:"select", source:"filieres", labelFn:f=>f.nom}
+  ]},
+  module:{title:"Module", fields:[
+    {key:"nom", label:"Nom du module", type:"text"},
+    {key:"filiereId", label:"Filière", type:"select", source:"filieres", labelFn:f=>f.nom}
+  ]},
+  salle:{title:"Salle", fields:[
+    {key:"nom", label:"Nom / numéro", type:"text"},
+    {key:"type", label:"Type", type:"text"}
+  ]},
+  enseignant:{title:"Enseignant", fields:[
+    {key:"nom", label:"Nom", type:"text"},
+    {key:"email", label:"Email", type:"text"}
+  ]}
+};
+let crudContext = null;
+
+function buildCrudCard(title, items, cols, kind){
+  const card = document.createElement("div"); card.className="card";
+  const h = document.createElement("h2"); h.textContent = title;
+  card.appendChild(h);
+
+  const tb = document.createElement("div"); tb.className="toolbar";
+  const addBtn = document.createElement("button"); addBtn.className="btn btn-gold btn-sm";
+  addBtn.textContent = "+ Ajouter";
+  addBtn.onclick = ()=> openCrudModal(kind, null);
+  tb.appendChild(addBtn);
+  card.appendChild(tb);
+
+  if(items.length===0){
+    const es = document.createElement("div"); es.className="empty-state"; es.textContent="Aucun élément pour l'instant.";
+    card.appendChild(es);
+    return card;
+  }
+
+  const table = document.createElement("table"); table.className="data-table";
+  const thead = document.createElement("thead");
+  thead.innerHTML = "<tr>"+cols.map(c=>`<th>${c==="filiereId"?"Filière":c}</th>`).join("")+"<th></th></tr>";
+  table.appendChild(thead);
+  const tbody = document.createElement("tbody");
+  items.forEach(it=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = cols.map(c=>{
+      if(c==="filiereId") return `<td>${(byId(db.filieres,it[c])||{}).nom||"—"}</td>`;
+      return `<td>${it[c]??"—"}</td>`;
+    }).join("");
+    const tdActions = document.createElement("td");
+    const editBtn = document.createElement("button"); editBtn.className="btn btn-outline btn-sm"; editBtn.textContent="Modifier";
+    editBtn.style.marginRight="6px";
+    editBtn.onclick = ()=> openCrudModal(kind, it.id);
+    const delBtn = document.createElement("button"); delBtn.className="btn btn-danger btn-sm"; delBtn.textContent="Suppr.";
+    delBtn.onclick = ()=> deleteCrudItem(kind, it.id);
+    tdActions.appendChild(editBtn); tdActions.appendChild(delBtn);
+    tr.appendChild(tdActions);
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  card.appendChild(table);
+  return card;
+}
+
+function kindCollection(kind){
+  return {filiere:"filieres", groupe:"groupes", module:"modules", salle:"salles", enseignant:"enseignants"}[kind];
+}
+function openCrudModal(kind, id){
+  crudContext = {kind, id};
+  const def = CRUD_LABELS[kind];
+  document.getElementById("crudModalTitle").textContent = (id?"Modifier — ":"Ajouter — ")+def.title;
+  const body = document.getElementById("crudModalBody");
+  body.innerHTML = "";
+  const collection = db[kindCollection(kind)];
+  const item = id ? byId(collection, id) : {};
+  def.fields.forEach(f=>{
+    const lbl = document.createElement("label"); lbl.textContent = f.label;
+    body.appendChild(lbl);
+    if(f.type==="select"){
+      const sel = document.createElement("select"); sel.id="crud_"+f.key;
+      db[f.source].forEach(opt=>{
+        const o = document.createElement("option"); o.value=opt.id; o.textContent=f.labelFn(opt);
+        if(item[f.key]===opt.id) o.selected=true;
+        sel.appendChild(o);
+      });
+      body.appendChild(sel);
+    } else {
+      const inp = document.createElement("input"); inp.id="crud_"+f.key; inp.value = item[f.key]||"";
+      body.appendChild(inp);
+    }
+  });
+  document.getElementById("crudModalOverlay").classList.add("show");
+}
+function closeCrudModal(){ document.getElementById("crudModalOverlay").classList.remove("show"); crudContext=null; }
+function saveCrudModal(){
+  const {kind, id} = crudContext;
+  const def = CRUD_LABELS[kind];
+  const collection = db[kindCollection(kind)];
+  const values = {};
+  def.fields.forEach(f=>{ values[f.key] = document.getElementById("crud_"+f.key).value; });
+  if(id){
+    Object.assign(byId(collection,id), values);
+    toast(def.title+" modifié(e).");
+  } else {
+    collection.push({id: uid(kind[0]), ...values});
+    toast(def.title+" ajouté(e).");
+  }
+  saveDB();
+  closeCrudModal();
+  renderMain();
+}
+function deleteCrudItem(kind, id){
+  const collection = db[kindCollection(kind)];
+  db[kindCollection(kind)] = collection.filter(x=>x.id!==id);
+  saveDB();
+  renderMain();
+  toast("Élément supprimé.");
+}
+
+/* =========================================================================
+   PANEL: DEMANDES D'ÉCHANGE
+   ========================================================================= */
+function renderDemandesPanel(){
+  const card = document.createElement("div"); card.className="card";
+  const h = document.createElement("h2"); h.textContent = "Demandes d'échange des enseignants";
+  card.appendChild(h);
+  const sub = document.createElement("div"); sub.className="sub"; sub.textContent="Validez ou refusez les demandes soumises par les enseignants.";
+  card.appendChild(sub);
+
+  if(db.swapRequests.length===0){
+    const es = document.createElement("div"); es.className="empty-state"; es.textContent="Aucune demande en attente.";
+    card.appendChild(es);
+    return card;
+  }
+
+  const table = document.createElement("table"); table.className="data-table";
+  table.innerHTML = "<thead><tr><th>Enseignant</th><th>Séance concernée</th><th>Motif</th><th>Statut</th><th></th></tr></thead>";
+  const tbody = document.createElement("tbody");
+  db.swapRequests.slice().reverse().forEach(req=>{
+    const sc = byId(db.seances, req.seanceId);
+    const tr = document.createElement("tr");
+    const statusBadge = req.status==="pending" ? `<span class="badge badge-pending">En attente</span>`
+      : req.status==="approved" ? `<span class="badge badge-ok">Approuvée</span>`
+      : `<span class="badge badge-rej">Refusée</span>`;
+    tr.innerHTML = `<td>${enseignantName(req.enseignantId)}</td>
+      <td>${sc? `${sc.jour} ${sc.debut}h-${sc.fin}h · ${moduleName(sc.moduleId)} · ${groupeName(sc.groupeId)}` : "Séance supprimée"}</td>
+      <td>${req.motif}</td>
+      <td>${statusBadge}</td>`;
+    const tdA = document.createElement("td");
+    if(req.status==="pending"){
+      const okBtn = document.createElement("button"); okBtn.className="btn btn-navy btn-sm"; okBtn.textContent="Approuver";
+      okBtn.style.marginRight="6px";
+      okBtn.onclick = ()=>{ req.status="approved"; saveDB(); renderMain(); toast("Demande approuvée."); };
+      const noBtn = document.createElement("button"); noBtn.className="btn btn-danger btn-sm"; noBtn.textContent="Refuser";
+      noBtn.onclick = ()=>{ req.status="rejected"; saveDB(); renderMain(); toast("Demande refusée."); };
+      tdA.appendChild(okBtn); tdA.appendChild(noBtn);
+    }
+    tr.appendChild(tdA);
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  card.appendChild(table);
+  return card;
+}
+
+/* =========================================================================
+   PANEL: MON PLANNING (enseignant / étudiant)
+   ========================================================================= */
+function renderMonPlanningPanel(){
+  const wrap = document.createElement("div");
+  const card = document.createElement("div"); card.className="card";
+
+  let seances = [];
+  let titleTxt = "";
+  if(currentUser.role==="enseignant"){
+    seances = db.seances.filter(s=>s.enseignantId===currentUser.enseignantId);
+    titleTxt = "Mon emploi du temps — "+currentUser.nom;
+  } else if(currentUser.role==="etudiant"){
+    seances = db.seances.filter(s=>s.groupeId===currentUser.groupeId);
+    const fil = filiereOfGroupe(currentUser.groupeId);
+    titleTxt = `Emploi du temps — ${groupeName(currentUser.groupeId)} (${fil?fil.nom:""} ${fil?fil.semestre:""})`;
+    filterState.filiereId = fil ? fil.id : filterState.filiereId;
+  }
+  const h = document.createElement("h2"); h.textContent = titleTxt;
+  card.appendChild(h);
+  card.appendChild(buildGrid(seances, false));
+  wrap.appendChild(card);
+
+  if(currentUser.role==="enseignant"){
+    wrap.appendChild(buildSwapRequestCard(seances));
+  }
+  return wrap;
+}
+
+function buildSwapRequestCard(mySeances){
+  const card = document.createElement("div"); card.className="card";
+  const h = document.createElement("h2"); h.textContent="Demander un échange de séance";
+  card.appendChild(h);
+  const sub = document.createElement("div"); sub.className="sub"; sub.textContent="Sélectionnez une séance et précisez le motif ; l'administration validera votre demande.";
+  card.appendChild(sub);
+
+  if(mySeances.length===0){
+    const es = document.createElement("div"); es.className="empty-state"; es.textContent="Vous n'avez aucune séance programmée.";
+    card.appendChild(es);
+    return card;
+  }
+
+  const tb = document.createElement("div"); tb.className="toolbar";
+  const sel = document.createElement("select");
+  mySeances.forEach(sc=>{
+    const o = document.createElement("option"); o.value = sc.id;
+    o.textContent = `${sc.jour} ${sc.debut}h-${sc.fin}h · ${moduleName(sc.moduleId)} · ${groupeName(sc.groupeId)}`;
+    sel.appendChild(o);
+  });
+  const motifInput = document.createElement("input");
+  motifInput.placeholder = "Motif de la demande (ex : conflit d'agenda)";
+  motifInput.style.minWidth = "260px";
+  const sendBtn = document.createElement("button"); sendBtn.className="btn btn-navy"; sendBtn.textContent="Envoyer la demande";
+  sendBtn.onclick = ()=>{
+    if(!motifInput.value.trim()){ toast("Veuillez préciser un motif."); return; }
+    db.swapRequests.push({id:uid("req"), seanceId:sel.value, enseignantId:currentUser.enseignantId, motif:motifInput.value.trim(), status:"pending"});
+    saveDB();
+    motifInput.value="";
+    toast("Demande envoyée à l'administration.");
+    renderMain();
+  };
+  tb.appendChild(sel); tb.appendChild(motifInput); tb.appendChild(sendBtn);
+  card.appendChild(tb);
+
+  const myReqs = db.swapRequests.filter(r=>r.enseignantId===currentUser.enseignantId);
+  if(myReqs.length){
+    const table = document.createElement("table"); table.className="data-table";
+    table.style.marginTop="14px";
+    table.innerHTML = "<thead><tr><th>Séance</th><th>Motif</th><th>Statut</th></tr></thead>";
+    const tbody = document.createElement("tbody");
+    myReqs.slice().reverse().forEach(r=>{
+      const sc = byId(db.seances, r.seanceId);
+      const statusBadge = r.status==="pending" ? `<span class="badge badge-pending">En attente</span>`
+        : r.status==="approved" ? `<span class="badge badge-ok">Approuvée</span>`
+        : `<span class="badge badge-rej">Refusée</span>`;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${sc? `${sc.jour} ${sc.debut}h-${sc.fin}h · ${moduleName(sc.moduleId)}`:"—"}</td><td>${r.motif}</td><td>${statusBadge}</td>`;
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    card.appendChild(table);
+  }
+  return card;
+}
+
+/* =========================================================================
+   PANEL: EXPORT (PDF / Excel)
+   ========================================================================= */
+function computeExportMeta(seances){
+  const groupeIds = [...new Set(seances.map(s=>s.groupeId))];
+  const filiereIds = [...new Set(groupeIds.map(gid=>{const g=byId(db.groupes,gid); return g?g.filiereId:null;}).filter(Boolean))];
+  let filiereLabel="—", semestreLabel="—", anneeLabel = (db.filieres[0]||{}).annee || "2025-26";
+  if(filiereIds.length===1){
+    const fil = byId(db.filieres, filiereIds[0]);
+    if(fil){ filiereLabel = fil.nom; semestreLabel = fil.semestre; anneeLabel = fil.annee; }
+  } else if(filiereIds.length>1){
+    filiereLabel = filiereIds.map(id=>(byId(db.filieres,id)||{}).nom).join(" / ");
+  }
+  let sectionLabel = "—";
+  if(groupeIds.length===1) sectionLabel = groupeName(groupeIds[0]);
+  else if(groupeIds.length>1) sectionLabel = groupeIds.map(groupeName).join(", ");
+  return {filiereLabel, semestreLabel, anneeLabel, sectionLabel};
+}
+
+function renderExportPanel(){
+  const card = document.createElement("div"); card.className="card";
+  const h = document.createElement("h2"); h.textContent = "Export du planning";
+  card.appendChild(h);
+  const sub = document.createElement("div"); sub.className="sub"; sub.textContent="Générez un PDF au format officiel ou un fichier Excel de l'emploi du temps affiché.";
+  card.appendChild(sub);
+
+  let seancesToExport, exportTitle, extraLine=null;
+  if(currentUser.role==="enseignant"){
+    seancesToExport = db.seances.filter(s=>s.enseignantId===currentUser.enseignantId);
+    exportTitle = "Emploi du temps — "+currentUser.nom;
+    extraLine = {label:"Enseignant", value: currentUser.nom};
+  } else if(currentUser.role==="etudiant"){
+    seancesToExport = db.seances.filter(s=>s.groupeId===currentUser.groupeId);
+    exportTitle = "Emploi du temps — "+groupeName(currentUser.groupeId);
+  } else {
+    seancesToExport = getFilteredSeances();
+    const fil = byId(db.filieres, filterState.filiereId);
+    exportTitle = `Emploi du temps — ${fil?fil.nom:""} ${fil?fil.semestre:""}` + (filterState.groupeId!=="all" ? " — "+groupeName(filterState.groupeId) : "");
+    card.appendChild(renderFilterToolbar(false));
+  }
+
+  const meta = computeExportMeta(seancesToExport);
+  if(extraLine) meta.extraLine = extraLine;
+
+  const tb = document.createElement("div"); tb.className="toolbar";
+  const pdfBtn = document.createElement("button"); pdfBtn.className="btn btn-navy"; pdfBtn.textContent="Exporter en PDF";
+  pdfBtn.onclick = ()=> exportPDF(seancesToExport, exportTitle, meta);
+  const xlsBtn = document.createElement("button"); xlsBtn.className="btn btn-gold"; xlsBtn.textContent="Exporter en Excel";
+  xlsBtn.onclick = ()=> exportExcel(seancesToExport, exportTitle, meta);
+  tb.appendChild(pdfBtn); tb.appendChild(xlsBtn);
+  card.appendChild(tb);
+
+  const previewNote = document.createElement("div");
+  previewNote.className = "small-note";
+  previewNote.textContent = "Aperçu ci-dessous (le PDF exporté suit le format officiel de la faculté) :";
+  card.appendChild(previewNote);
+
+  const preview = document.createElement("div");
+  preview.id = "exportPreviewGrid";
+  preview.style.marginTop = "10px";
+  preview.appendChild(buildGrid(seancesToExport, false));
+  card.appendChild(preview);
+  return card;
+}
+
+/* ---- PDF au format officiel (dessin vectoriel : ressemble au modèle papier de la faculté) ---- */
+/* ---- utilitaires format officiel : abréviation modules, saison du semestre, préfixe commun de groupes ---- */
+const ABBR_STOPWORDS = new Set(["d","l","de","du","des","la","le","les","et","à","en","pour"]);
+function abbreviateModule(name){
+  return name.split(/[\s'’]+/)
+    .map(w=>w.replace(/[^\p{L}\p{N}]/gu,""))
+    .filter(w=>w.length>0 && !ABBR_STOPWORDS.has(w.toLowerCase()))
+    .map(w=> (w.length<=4 ? w : w.slice(0,4)).toUpperCase())
+    .join(" ");
+}
+function romanToInt(s){
+  const map={I:1,V:5,X:10,L:50,C:100};
+  let result=0;
+  for(let i=0;i<s.length;i++){
+    const cur=map[s[i]]||0, next=map[s[i+1]]||0;
+    result += (next>cur) ? -cur : cur;
+  }
+  return result;
+}
+function semestreSaison(semestreLabel){
+  if(!semestreLabel) return "";
+  const m = semestreLabel.match(/([IVXLC]+|\d+)/i);
+  if(!m) return "";
+  const raw = m[1];
+  const num = /^[0-9]+$/.test(raw) ? parseInt(raw,10) : romanToInt(raw.toUpperCase());
+  if(!num) return "";
+  return (num % 2 === 1) ? "SEMESTRE D'AUTOMNE" : "SEMESTRE DE PRINTEMPS";
+}
+function commonGroupLabel(groupeIds){
+  const names = groupeIds.map(groupeName);
+  const stripped = names.map(n=>n.replace(/[0-9]+$/,""));
+  const allSame = stripped.every(s=>s && s===stripped[0]);
+  return allSame ? stripped[0] : names.join("+");
+}
+
+function exportPDF(seances, title, meta){
+  if(!window.jspdf){ toast("Bibliothèque PDF indisponible (connexion internet requise)."); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:"landscape", unit:"pt", format:"a4"});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 40;
+
+  /* ---- en-tête façon document officiel ---- */
+  doc.setFont("times","bold"); doc.setFontSize(11);
+  doc.text("UNIVERSITE MOULAY ISMAIL", margin+100, 44, {align:"center"});
+  doc.text("FACULTE DES SCIENCES", margin+100, 58, {align:"center"});
+  doc.text("MEKNES", margin+100, 72, {align:"center"});
+
+  const rx = pageW - margin - 10;
+  doc.setFont("times","bold"); doc.setFontSize(10);
+  doc.text(`Année universitaire : ${meta.anneeLabel}`, rx, 40, {align:"right"});
+  doc.text(`Filière : ${meta.filiereLabel}`, rx, 54, {align:"right"});
+  doc.text(`Semestre : ${meta.semestreLabel}`, rx, 68, {align:"right"});
+  doc.text(`Section : ${meta.sectionLabel}`, rx, 82, {align:"right"});
+  if(meta.extraLine){
+    doc.text(`${meta.extraLine.label} : ${meta.extraLine.value}`, rx, 96, {align:"right"});
+  }
+
+  doc.setFont("times","bold"); doc.setFontSize(16);
+  doc.text("EMPLOI DU TEMPS", pageW/2, 112, {align:"center"});
+  doc.setFont("times","normal"); doc.setFontSize(11);
+  doc.text(semestreSaison(meta.semestreLabel) || meta.semestreLabel, pageW/2, 130, {align:"center"});
+
+  /* ---- grille ---- */
+  const dayColW = 68;
+  const gridTop = 155;
+  const hourAxisH = 18;
+  const gridLeft = margin;
+  const gridRight = pageW - margin;
+  const totalHours = HOUR_END - HOUR_START;
+  const hourW = (gridRight - gridLeft - dayColW) / totalHours;
+  const firstRowY = gridTop + hourAxisH;
+  const rowH = Math.floor((pageH - 46 - firstRowY) / DAYS.length);
+
+  doc.setDrawColor(20,20,20);
+  doc.setLineWidth(0.7);
+
+  /* numéros d'heures + graduations */
+  doc.setFont("helvetica","normal"); doc.setFontSize(9);
+  for(let hIdx=0; hIdx<=totalHours; hIdx++){
+    const x = gridLeft + dayColW + hIdx*hourW;
+    if(hIdx<totalHours) doc.text(String(HOUR_START+hIdx), x+3, gridTop+12);
+    doc.setLineWidth(0.6);
+    doc.line(x, gridTop+hourAxisH-6, x, gridTop+hourAxisH);
+  }
+
+  /* lignes verticales pointillées sur toute la hauteur de la grille */
+  doc.setLineDash([1,2], 0);
+  doc.setLineWidth(0.4);
+  for(let hIdx=0; hIdx<=totalHours; hIdx++){
+    const x = gridLeft + dayColW + hIdx*hourW;
+    doc.line(x, firstRowY, x, firstRowY + rowH*DAYS.length);
+  }
+  doc.setLineDash([], 0);
+
+  /* cadre + séparateurs de lignes/colonnes (traits pleins) */
+  doc.setLineWidth(0.8);
+  doc.line(gridLeft, gridTop, gridRight, gridTop);
+  doc.line(gridLeft, firstRowY, gridRight, firstRowY);
+  for(let d=0; d<=DAYS.length; d++){
+    const y = firstRowY + d*rowH;
+    doc.line(gridLeft, y, gridRight, y);
+  }
+  doc.line(gridLeft, gridTop, gridLeft, firstRowY + rowH*DAYS.length);
+  doc.line(gridLeft+dayColW, gridTop, gridLeft+dayColW, firstRowY + rowH*DAYS.length);
+  doc.line(gridRight, gridTop, gridRight, firstRowY + rowH*DAYS.length);
+
+  /* noms des jours */
+  doc.setFont("times","normal"); doc.setFontSize(12);
+  DAYS.forEach((day,d)=>{
+    const y = firstRowY + d*rowH;
+    doc.text(day, gridLeft+10, y + rowH/2 + 4);
+  });
+
+  /* séances : fusion des groupes identiques (A1+A2 → "A") puis affectation de "voies" (lanes) par jour */
+  DAYS.forEach((day,d)=>{
+    const y0 = firstRowY + d*rowH;
+    const daySeances = seances.filter(s=>s.jour===day).sort((a,b)=>a.debut-b.debut || a.fin-b.fin);
+
+    const used = new Set();
+    const merged = [];
+    daySeances.forEach(sc=>{
+      if(used.has(sc.id)) return;
+      const dupes = daySeances.filter(o=>o.id!==sc.id && !used.has(o.id) &&
+        o.moduleId===sc.moduleId && o.salleId===sc.salleId && o.enseignantId===sc.enseignantId &&
+        o.debut===sc.debut && o.fin===sc.fin);
+      const groupeIds = [sc.groupeId, ...dupes.map(x=>x.groupeId)];
+      used.add(sc.id); dupes.forEach(x=>used.add(x.id));
+      merged.push({...sc, label: commonGroupLabel(groupeIds)});
+    });
+
+    const lanesEnd = [];
+    const placed = merged.map(sc=>{
+      let lane = 0;
+      while(lanesEnd[lane] !== undefined && lanesEnd[lane] > sc.debut) lane++;
+      lanesEnd[lane] = sc.fin;
+      return {sc, lane};
+    });
+    const numLanes = Math.max(1, lanesEnd.length);
+    const laneH = (rowH - 10) / numLanes;
+
+    placed.forEach(({sc,lane})=>{
+      const x1 = gridLeft + dayColW + (sc.debut-HOUR_START)*hourW;
+      const x2 = gridLeft + dayColW + (sc.fin-HOUR_START)*hourW;
+      const ly = y0 + 8 + laneH*(lane+0.5) + 8;
+
+      doc.setLineWidth(0.7);
+      doc.line(x1, ly, x2, ly);
+      doc.line(x1, ly-3, x1, ly+3);
+      doc.line(x2, ly-3, x2, ly+3);
+
+      const label = `${sc.label} : ${abbreviateModule(moduleName(sc.moduleId))} : ${salleName(sc.salleId)}`;
+      doc.setFont("times","normal"); doc.setFontSize(6.6);
+      doc.text(label, x1+2, ly-4);
+    });
+  });
+
+  /* date de génération, bas de page */
+  doc.setFont("helvetica","normal"); doc.setFontSize(9);
+  doc.text(new Date().toLocaleDateString("fr-FR"), gridRight, pageH-20, {align:"right"});
+
+  doc.save(title.replace(/\s+/g,"_")+".pdf");
+  toast("PDF généré au format officiel.");
+}
+
+function exportExcel(seances, title, meta){
+  if(!window.XLSX){ toast("Bibliothèque Excel indisponible (connexion internet requise)."); return; }
+  const totalHours = HOUR_END - HOUR_START;
+  const numCols = 1 + totalHours;
+  const thin = {style:"thin", color:{rgb:"999999"}};
+  const borderAll = {top:thin, bottom:thin, left:thin, right:thin};
+  const centerWrap = {horizontal:"center", vertical:"center", wrapText:true};
+
+  const ws = {};
+  const merges = [];
+  let r = 0;
+
+  function setCell(rr, cc, value, style){
+    const addr = XLSX.utils.encode_cell({r:rr, c:cc});
+    ws[addr] = {t:"s", v: value==null ? "" : String(value), s: style || {}};
+  }
+
+  setCell(r,0,"UNIVERSITE MOULAY ISMAIL — FACULTE DES SCIENCES — MEKNES", {font:{bold:true, sz:12}, alignment:centerWrap});
+  merges.push({s:{r,c:0}, e:{r,c:numCols-1}}); r++;
+
+  setCell(r,0,"EMPLOI DU TEMPS", {font:{bold:true, sz:15}, alignment:centerWrap});
+  merges.push({s:{r,c:0}, e:{r,c:numCols-1}}); r++;
+
+  setCell(r,0, semestreSaison(meta.semestreLabel) || meta.semestreLabel, {font:{italic:true, sz:11}, alignment:centerWrap});
+  merges.push({s:{r,c:0}, e:{r,c:numCols-1}}); r++;
+
+  const metaLine = `Année universitaire : ${meta.anneeLabel}    |    Filière : ${meta.filiereLabel}    |    Semestre : ${meta.semestreLabel}    |    Section : ${meta.sectionLabel}` +
+    (meta.extraLine ? `    |    ${meta.extraLine.label} : ${meta.extraLine.value}` : "");
+  setCell(r,0, metaLine, {font:{sz:10}, alignment:centerWrap});
+  merges.push({s:{r,c:0}, e:{r,c:numCols-1}}); r++;
+  r++; // ligne vide
+
+  const headerRow = r;
+  setCell(headerRow, 0, "Jour / Heure", {font:{bold:true, color:{rgb:"FFFFFF"}}, fill:{fgColor:{rgb:"132A45"}}, alignment:centerWrap, border:borderAll});
+  for(let h=0; h<totalHours; h++){
+    setCell(headerRow, 1+h, (HOUR_START+h)+"h", {font:{bold:true, color:{rgb:"FFFFFF"}}, fill:{fgColor:{rgb:"132A45"}}, alignment:centerWrap, border:borderAll});
+  }
+  r++;
+
+  DAYS.forEach(day=>{
+    const daySeances = seances.filter(s=>s.jour===day).sort((a,b)=>a.debut-b.debut || a.fin-b.fin);
+
+    const used = new Set();
+    const merged = [];
+    daySeances.forEach(sc=>{
+      if(used.has(sc.id)) return;
+      const dupes = daySeances.filter(o=>o.id!==sc.id && !used.has(o.id) &&
+        o.moduleId===sc.moduleId && o.salleId===sc.salleId && o.enseignantId===sc.enseignantId &&
+        o.debut===sc.debut && o.fin===sc.fin);
+      const groupeIds = [sc.groupeId, ...dupes.map(x=>x.groupeId)];
+      used.add(sc.id); dupes.forEach(x=>used.add(x.id));
+      merged.push({...sc, label: commonGroupLabel(groupeIds)});
+    });
+
+    const lanesEnd = [];
+    const placed = merged.map(sc=>{
+      let lane = 0;
+      while(lanesEnd[lane] !== undefined && lanesEnd[lane] > sc.debut) lane++;
+      lanesEnd[lane] = sc.fin;
+      return {sc, lane};
+    });
+    const numLanes = Math.max(1, lanesEnd.length);
+    const dayStartRow = r;
+
+    for(let lane=0; lane<numLanes; lane++){
+      setCell(dayStartRow+lane, 0, "", {border:borderAll});
+      for(let h=0; h<totalHours; h++){
+        setCell(dayStartRow+lane, 1+h, "", {border:borderAll});
+      }
+    }
+    setCell(dayStartRow, 0, day, {font:{bold:true}, alignment:centerWrap, border:borderAll, fill:{fgColor:{rgb:"F0EEE6"}}});
+    if(numLanes>1) merges.push({s:{r:dayStartRow,c:0}, e:{r:dayStartRow+numLanes-1,c:0}});
+
+    placed.forEach(({sc,lane})=>{
+      const c1 = 1 + (sc.debut-HOUR_START);
+      const c2 = 1 + (sc.fin-HOUR_START) - 1;
+      const label = `${sc.label} : ${abbreviateModule(moduleName(sc.moduleId))} : ${salleName(sc.salleId)}`;
+      setCell(dayStartRow+lane, c1, label, {font:{sz:9}, alignment:centerWrap, border:borderAll, fill:{fgColor:{rgb:"FFF3DC"}}});
+      if(c2>c1) merges.push({s:{r:dayStartRow+lane, c:c1}, e:{r:dayStartRow+lane, c:c2}});
+    });
+
+    r = dayStartRow + numLanes;
+  });
+
+  ws["!ref"] = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:r-1, c:numCols-1}});
+  ws["!merges"] = merges;
+  ws["!cols"] = [{wch:13}, ...Array(totalHours).fill({wch:12})];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Emploi du temps");
+  XLSX.writeFile(wb, title.replace(/\s+/g,"_")+".xlsx");
+  toast("Fichier Excel généré au format grille.");
+}
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+loadDB();
+tryRestoreSession();
+document.getElementById("loginPass").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
+</script>
+</body>
+</html>
